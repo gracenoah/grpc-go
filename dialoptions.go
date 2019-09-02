@@ -62,6 +62,7 @@ type dialOptions struct {
 	resolverBuilder             resolver.Builder
 	channelzParentID            int64
 	disableServiceConfig        bool
+	disableDNSRateLimit         bool
 	disableRetry                bool
 	disableHealthCheck          bool
 	healthCheckFunc             internal.HealthChecker
@@ -470,6 +471,14 @@ func WithChannelzParentID(id int64) DialOption {
 func WithDisableServiceConfig() DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
 		o.disableServiceConfig = true
+	})
+}
+
+// WithDisableServiceConfig returns a DialOption that causes gRPC to not attempt
+// to rate limit DNS requests.
+func WithDisableDNSRateLimit() DialOption {
+	return newFuncDialOption(func(o *dialOptions) {
+		o.disableDNSRateLimit = true
 	})
 }
 

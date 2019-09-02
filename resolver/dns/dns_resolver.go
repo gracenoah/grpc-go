@@ -137,6 +137,7 @@ func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts 
 		t:                    time.NewTimer(0),
 		rn:                   make(chan struct{}, 1),
 		disableServiceConfig: opts.DisableServiceConfig,
+		rateLimit:            !opts.DisableDNSRateLimit,
 	}
 
 	if target.Authority == "" {
@@ -219,6 +220,7 @@ type dnsResolver struct {
 	// has data race with replaceNetFunc (WRITE the lookup function pointers).
 	wg                   sync.WaitGroup
 	disableServiceConfig bool
+	rateLimit            bool
 }
 
 // ResolveNow invoke an immediate resolution of the target that this dnsResolver watches.
@@ -264,14 +266,16 @@ func (d *dnsResolver) watcher() {
 		d.cc.NewServiceConfig(sc)
 		d.cc.NewAddress(result)
 
-		// Sleep to prevent excessive re-resolutions. Incoming resolution requests
-		// will be queued in d.rn.
-		t := time.NewTimer(minDNSResRate)
-		select {
-		case <-t.C:
-		case <-d.ctx.Done():
-			t.Stop()
-			return
+		if d.rateLimit {
+			// Sleep to prevent excessive re-resolutions. Incoming resolution requests
+			// will be queued in d.rn.
+			t := time.NewTimer(minDNSResRate)
+			select {
+			case <-t.C:
+			case <-d.ctx.Done():
+				t.Stop()
+				return
+			}
 		}
 	}
 }

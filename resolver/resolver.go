@@ -100,6 +100,8 @@ type Address struct {
 type BuildOption struct {
 	// DisableServiceConfig indicates whether resolver should fetch service config data.
 	DisableServiceConfig bool
+	// DisableDNSRateLimit disables the rate limit on the number of DNS re-resolutions
+	DisableDNSRateLimit bool
 }
 
 // State contains the current Resolver state relevant to the ClientConn.
